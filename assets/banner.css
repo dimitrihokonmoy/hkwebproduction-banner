@@ -7,11 +7,12 @@
 
 /* Conteneur principal : fixé tout en haut du site, au-dessus du menu.
    z-index 9999 : au-dessus du header (1000) mais sous l'overlay de recherche (10000).
-   La police reprend celle du thème (--jdb-font-body) avec repli si absente. */
+   La police est héritée du contexte (font-family: inherit) : la bannière
+   s'harmonise automatiquement avec la police du thème, sans dépendance. */
 .hkwp-banner {
 	width: 100%;
 	box-sizing: border-box;
-	font-family: var(--jdb-font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+	font-family: inherit;
 	font-size: 14px;
 	line-height: 1.4;
 	letter-spacing: .2px;

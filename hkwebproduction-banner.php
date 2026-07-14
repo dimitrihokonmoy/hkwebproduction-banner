@@ -3,7 +3,7 @@
  * Plugin Name:       HKWebProduction Banner
  * Plugin URI:        https://hkwebproduction.com/
  * Description:       Affiche un message promotionnel en haut du site (juste après l'ouverture de la balise body). Le message, les couleurs et le bouton de fermeture se configurent depuis l'administration WordPress.
- * Version:           1.0.2
+ * Version:           1.0.3
  * Requires at least: 6.0
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 /** Version du plugin (sert aussi au versionnage du cache CSS/JS). */
-define( 'HKWP_BANNER_VERSION', '1.0.2' );
+define( 'HKWP_BANNER_VERSION', '1.0.3' );
 
 /** Clé unique de l'option stockée en base (table wp_options). */
 define( 'HKWP_BANNER_OPTION', 'hkwp_banner_settings' );

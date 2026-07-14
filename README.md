@@ -3,7 +3,7 @@
 Plugin WordPress qui affiche un message promotionnel **tout en haut du site** (bandeau plein largeur), configurable depuis l'administration : texte/HTML, couleurs, et bouton de fermeture.
 
 - **Auteur :** HKWebProduction
-- **Version :** 1.0.2
+- **Version :** 1.0.3
 - **Licence :** GPL-2.0-or-later
 - **Text Domain :** `hkwebproduction-banner`
 
@@ -149,10 +149,9 @@ identifiants sont préfixés :
 
 ### Note sur la typographie
 
-La bannière hérite de la police du thème via la variable CSS `--jdb-font-body`
-**si elle existe**, avec un repli sur une pile de polices système sans-serif. Elle
-s'intègre donc visuellement au thème quand cette variable est définie, et reste
-lisible partout sinon.
+La bannière utilise `font-family: inherit` : elle hérite donc automatiquement de la
+police du site (celle appliquée au `body` par le thème). Aucune dépendance à un thème
+particulier, tout en restant harmonisée visuellement.
 
 ---
 
@@ -224,6 +223,10 @@ Le plugin applique les bonnes pratiques WordPress :
 ---
 
 ## 11. Journal des versions
+
+### 1.0.3
+- Typographie : `font-family: inherit` (héritage automatique de la police du site,
+  plus aucune référence à une variable de thème spécifique).
 
 ### 1.0.2
 - Bannière responsive : media queries mobile (< 768px) et petit mobile (< 480px),
