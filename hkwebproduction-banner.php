@@ -3,7 +3,7 @@
  * Plugin Name:       HKWebProduction Banner
  * Plugin URI:        https://hkwebproduction.com/
  * Description:       Affiche un message promotionnel en haut du site (juste après l'ouverture de la balise body). Le message, les couleurs et le bouton de fermeture se configurent depuis l'administration WordPress.
- * Version:           1.0.5
+ * Version:           1.0.6
  * Requires at least: 6.0
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 /** Version du plugin (sert aussi au versionnage du cache CSS/JS). */
-define( 'HKWP_BANNER_VERSION', '1.0.5' );
+define( 'HKWP_BANNER_VERSION', '1.0.6' );
 
 /** Clé unique de l'option stockée en base (table wp_options). */
 define( 'HKWP_BANNER_OPTION', 'hkwp_banner_settings' );
@@ -471,8 +471,13 @@ function hkwp_banner_settings_page() {
 								class="large-text"
 								placeholder="<?php esc_attr_e( 'Ex. : Promo de rentrée -20% jusqu\'au 30 septembre !', 'hkwebproduction-banner' ); ?>"><?php echo esc_textarea( $settings['message'] ); ?></textarea>
 							<p class="description">
-								<?php esc_html_e( 'Vous pouvez inclure un lien HTML, par exemple :', 'hkwebproduction-banner' ); ?>
+								<?php esc_html_e( 'Le HTML est autorisé : liens, gras, italique, ainsi que des balises stylées (span, styles en ligne). Les balises non sûres (script, etc.) sont automatiquement retirées.', 'hkwebproduction-banner' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'Exemple : ', 'hkwebproduction-banner' ); ?>
 								<code>&lt;a href="/promo"&gt;<?php esc_html_e( 'Voir l\'offre', 'hkwebproduction-banner' ); ?>&lt;/a&gt;</code>
+								<?php esc_html_e( 'ou ', 'hkwebproduction-banner' ); ?>
+								<code>&lt;span style="color:#ff2e2e"&gt;-30%&lt;/span&gt;</code>
 							</p>
 						</td>
 					</tr>

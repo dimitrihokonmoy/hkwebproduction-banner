@@ -3,7 +3,7 @@
 Plugin WordPress qui affiche un message promotionnel **tout en haut du site** (bandeau plein largeur), configurable depuis l'administration : texte/HTML, couleurs, et bouton de fermeture.
 
 - **Auteur :** HKWebProduction
-- **Version :** 1.0.5
+- **Version :** 1.0.6
 - **Licence :** GPL-2.0-or-later
 - **Text Domain :** `hkwebproduction-banner`
 
@@ -242,6 +242,10 @@ Le plugin applique les bonnes pratiques WordPress :
 ---
 
 ## 11. Journal des versions
+
+### 1.0.6
+- Page de réglages : précision que le champ Message accepte le HTML (liens, gras,
+  balises stylées), avec exemples. Rappel que les balises non sûres sont retirées.
 
 ### 1.0.5
 - Page de réglages : encadré d'information sur la programmation, précisant que les dates
