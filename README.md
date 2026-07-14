@@ -3,7 +3,7 @@
 Plugin WordPress qui affiche un message promotionnel **tout en haut du site** (bandeau plein largeur), configurable depuis l'administration : texte/HTML, couleurs, et bouton de fermeture.
 
 - **Auteur :** HKWebProduction
-- **Version :** 1.0.4
+- **Version :** 1.0.5
 - **Licence :** GPL-2.0-or-later
 - **Text Domain :** `hkwebproduction-banner`
 
@@ -67,9 +67,15 @@ Les champs **Date de début** et **Date de fin** permettent d'afficher la banni�
 uniquement pendant une période donnée (ex. une promo limitée dans le temps) :
 
 - Les deux champs sont **optionnels** et indépendants (on peut ne renseigner que l'un).
-- Les dates sont interprétées dans le **fuseau horaire du site** (Réglages → Général).
+- Les dates sont interprétées dans le **fuseau horaire de WordPress** (Réglages → Général),
+  et **non** l'heure brute du serveur (souvent en UTC). La page de réglages rappelle le
+  fuseau actif et affiche l'heure actuelle du site pour lever toute ambiguïté.
 - Hors période, la bannière n'est pas rendue **et** ses fichiers CSS/JS ne sont pas
   chargés (aucun impact sur les performances).
+
+> **Note technique :** le plugin utilise `wp_timezone()` (fuseau du site) pour construire
+> à la fois « maintenant » et les bornes de début/fin. La comparaison est donc toujours
+> cohérente, quel que soit le fuseau réel du serveur.
 
 ---
 
@@ -236,6 +242,11 @@ Le plugin applique les bonnes pratiques WordPress :
 ---
 
 ## 11. Journal des versions
+
+### 1.0.5
+- Page de réglages : encadré d'information sur la programmation, précisant que les dates
+  suivent le fuseau horaire de WordPress (pas celui du serveur), avec l'heure actuelle
+  du site et un lien vers le réglage du fuseau.
 
 ### 1.0.4
 - Programmation d'affichage : champs **date de début** et **date de fin** (optionnels),

@@ -3,7 +3,7 @@
  * Plugin Name:       HKWebProduction Banner
  * Plugin URI:        https://hkwebproduction.com/
  * Description:       Affiche un message promotionnel en haut du site (juste après l'ouverture de la balise body). Le message, les couleurs et le bouton de fermeture se configurent depuis l'administration WordPress.
- * Version:           1.0.4
+ * Version:           1.0.5
  * Requires at least: 6.0
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 /** Version du plugin (sert aussi au versionnage du cache CSS/JS). */
-define( 'HKWP_BANNER_VERSION', '1.0.4' );
+define( 'HKWP_BANNER_VERSION', '1.0.5' );
 
 /** Clé unique de l'option stockée en base (table wp_options). */
 define( 'HKWP_BANNER_OPTION', 'hkwp_banner_settings' );
@@ -517,6 +517,32 @@ function hkwp_banner_settings_page() {
 					</tr>
 
 					<tr>
+						<td colspan="2" style="padding-left:0;">
+							<div class="notice notice-info inline" style="margin:0;">
+								<p style="margin:.6em 0;">
+									<strong><?php esc_html_e( 'Programmation d\'affichage', 'hkwebproduction-banner' ); ?></strong><br />
+									<?php
+									/* translators: %s: identifiant du fuseau horaire du site (ex. Europe/Paris). */
+									printf(
+										esc_html__( 'Les dates ci-dessous utilisent le fuseau horaire de WordPress (%s), et non l\'heure brute du serveur.', 'hkwebproduction-banner' ),
+										'<code>' . esc_html( wp_timezone_string() ) . '</code>'
+									);
+									?>
+									<br />
+									<?php
+									/* translators: %s: date et heure courantes du site. */
+									printf(
+										esc_html__( 'Heure actuelle du site : %s.', 'hkwebproduction-banner' ),
+										'<strong>' . esc_html( wp_date( 'd/m/Y H:i' ) ) . '</strong>'
+									);
+									?>
+									<a href="<?php echo esc_url( admin_url( 'options-general.php' ) ); ?>"><?php esc_html_e( 'Modifier le fuseau horaire', 'hkwebproduction-banner' ); ?></a>
+								</p>
+							</div>
+						</td>
+					</tr>
+
+					<tr>
 						<th scope="row">
 							<label for="hkwp_banner_start_date"><?php esc_html_e( 'Date de début', 'hkwebproduction-banner' ); ?></label>
 						</th>
@@ -539,12 +565,6 @@ function hkwp_banner_settings_page() {
 								name="<?php echo esc_attr( HKWP_BANNER_OPTION ); ?>[end_date]"
 								value="<?php echo esc_attr( $settings['end_date'] ); ?>" />
 							<span class="description"><?php esc_html_e( 'Optionnel. Après cette date, la bannière ne s\'affiche plus. Laissez vide pour un affichage sans fin.', 'hkwebproduction-banner' ); ?></span>
-							<p class="description">
-								<?php
-								/* translators: %s: fuseau horaire du site (ex. Europe/Paris). */
-								printf( esc_html__( 'Les dates utilisent le fuseau horaire du site : %s.', 'hkwebproduction-banner' ), '<code>' . esc_html( wp_timezone_string() ) . '</code>' );
-								?>
-							</p>
 						</td>
 					</tr>
 				</tbody>
