@@ -3,7 +3,7 @@
 Plugin WordPress qui affiche un message promotionnel **tout en haut du site** (bandeau plein largeur), configurable depuis l'administration : texte/HTML, couleurs, et bouton de fermeture.
 
 - **Auteur :** HKWebProduction
-- **Version :** 1.0.0
+- **Version :** 1.0.2
 - **Licence :** GPL-2.0-or-later
 - **Text Domain :** `hkwebproduction-banner`
 
@@ -15,8 +15,8 @@ Plugin WordPress qui affiche un message promotionnel **tout en haut du site** (b
 | ------------------ | ----------------------------------------- | --------------- |
 | PHP                | 7.4 minimum — **testé sur 8.4.15**        | ✅ Compatible   |
 | WordPress          | 6.0 minimum — **testé sur 7.0**           | ✅ Compatible   |
-| Dépendance thème   | Le thème doit appeler `wp_body_open()`    | ✅ `jdb-secrets` OK (header.php ligne 22) |
-| Autres extensions  | Aucun conflit détecté (préfixe unique)    | ✅ Vérifié      |
+| Dépendance thème   | Le thème doit appeler `wp_body_open()`    | Voir section 4  |
+| Autres extensions  | Aucun conflit (préfixe unique `hkwp_`)    | ✅ Vérifié      |
 
 Validé avec `php -l` (aucune erreur de syntaxe) et un test runtime sous `E_ALL`
 (aucune dépréciation PHP 8.4, aucune erreur fatale).
@@ -25,15 +25,22 @@ Validé avec `php -l` (aucune erreur de syntaxe) et un test runtime sous `E_ALL`
 
 ## 2. Installation et activation
 
-Le plugin est déjà présent dans :
+**Option A — via l'administration WordPress :**
 
-```
-www/wp-content/plugins/hkwebproduction-banner/
+1. Télécharger l'archive `hkwebproduction-banner-x.y.z.zip` (page *Releases* du dépôt).
+2. Admin WordPress → **Extensions → Ajouter → Téléverser une extension**.
+3. Sélectionner le zip, installer, puis **Activer**.
+
+**Option B — via Git / dépôt :**
+
+```bash
+cd wp-content/plugins/
+git clone https://github.com/dimitrihokonmoy/hkwebproduction-banner.git
 ```
 
-1. Admin WordPress → **Extensions**.
-2. Activer **HKWebProduction Banner**.
-3. Aller dans **Réglages → HKWP Banner** (ou cliquer « Réglages » sur la ligne du plugin).
+Puis activer l'extension dans **Extensions**.
+
+Une fois activé : **Réglages → HKWP Banner** (ou lien « Réglages » sur la ligne du plugin).
 
 ---
 
@@ -54,44 +61,47 @@ Dans **Réglages → HKWP Banner** :
 
 ---
 
-## 4. Architecture des fichiers
+## 4. Point d'accroche et intégration au thème
 
-```
-hkwebproduction-banner/
-├── hkwebproduction-banner.php   # Plugin principal : réglages, sécurité, affichage
-├── assets/
-│   ├── banner.css               # Styles de la bannière (préfixe BEM hkwp-banner)
-│   └── banner.js                # Bouton fermer + mémorisation localStorage
-└── README.md                    # Cette documentation
-```
-
-### Point d'accroche (où s'affiche la bannière)
+### Où s'affiche la bannière
 
 La bannière est injectée via le hook **`wp_body_open`**, déclenché juste après la
 balise `<body>`. Elle se place donc avant l'en-tête du thème, tout en haut de la page.
 
-> ⚠️ **Prérequis :** le thème actif doit appeler `wp_body_open()` dans son `header.php`.
-> Le thème `jdb-secrets` le fait déjà. Si vous changez de thème, vérifiez ce point.
+> ⚠️ **Prérequis :** le thème actif doit appeler `wp_body_open()` dans son `header.php`
+> (standard depuis WordPress 5.2). La plupart des thèmes modernes le font. Si ce n'est
+> pas le cas, ajoutez `<?php wp_body_open(); ?>` juste après la balise `<body>`.
 
-### Cohabitation avec le menu fixe (important)
+### Cohabitation avec un en-tête fixe (`position: fixed` / `sticky`)
 
-Le thème `jdb-secrets` a un menu `.site-header` en `position: fixed; top: 0`.
-La bannière étant elle aussi fixée en haut, un mécanisme de décalage évite tout
-chevauchement :
+Si votre thème a un en-tête **fixe ou sticky**, il flotte au-dessus du flux de la page
+et **recouvre** la bannière. Le plugin fournit tout le nécessaire pour corriger cela
+sans le coder en dur pour un thème donné :
 
-1. La bannière est en `position: fixed; top: 0` (au-dessus du menu, z-index 9999).
-2. Le script `banner.js` mesure la hauteur réelle de la bannière et la publie dans
-   une variable CSS globale : `--hkwp-banner-h` (recalculée au redimensionnement,
-   remise à `0px` quand la bannière est fermée).
-3. Le thème (`css/header.css`) consomme cette variable pour décaler le menu et le
-   contenu :
-   - `.site-header { top: var(--hkwp-banner-h, 0px); }`
-   - `.site-main { padding-top: calc(var(--jdb-header-h) + 30px + var(--hkwp-banner-h, 0px)); }`
-   - version accueil et menu mobile ajustés de la même manière.
+1. La bannière est en `position: fixed; top: 0` (z-index 9999, au-dessus de l'en-tête).
+2. Le script `banner.js` mesure la hauteur réelle de la bannière et la publie dans une
+   variable CSS globale : **`--hkwp-banner-h`** (recalculée au redimensionnement,
+   remise à `0px` quand la bannière est fermée ou absente).
+3. Il suffit alors que le thème **consomme cette variable** pour décaler son en-tête
+   fixe et son contenu.
 
-> Le **repli `0px`** garantit que le thème reste correct **même si le plugin est
-> désactivé** : sans la variable, le menu revient simplement en haut (`top: 0`).
-> Si vous changez de thème, reportez ces 3 règles dans le nouveau thème.
+**Exemple générique** à adapter aux sélecteurs de votre thème :
+
+```css
+/* En-tête fixe décalé vers le bas de la hauteur de la bannière */
+.mon-header-fixe {
+    top: var(--hkwp-banner-h, 0px);
+}
+
+/* Contenu décalé d'autant pour ne pas passer sous l'en-tête */
+.mon-contenu-principal {
+    padding-top: calc(<hauteur-header> + var(--hkwp-banner-h, 0px));
+}
+```
+
+> Le **repli `0px`** est essentiel : si le plugin est désactivé (ou la variable absente),
+> le thème retrouve exactement son comportement d'origine. Ces règles sont donc sûres à
+> laisser en place en permanence.
 
 ---
 
@@ -99,8 +109,8 @@ chevauchement :
 
 ### Conventions de nommage (préfixes uniques)
 
-Pour éviter tout conflit avec le core WordPress et les autres extensions
-(WooCommerce, WPBakery, Yoast, Jetpack…), tous les identifiants sont préfixés :
+Pour éviter tout conflit avec le core WordPress et les autres extensions, tous les
+identifiants sont préfixés :
 
 | Type                | Préfixe                | Exemple                        |
 | ------------------- | ---------------------- | ------------------------------ |
@@ -137,11 +147,18 @@ Pour éviter tout conflit avec le core WordPress et les autres extensions
 | `admin_init`                | action | `hkwp_banner_register_settings`  |
 | `plugin_action_links_{...}` | filter | `hkwp_banner_action_links`       |
 
+### Note sur la typographie
+
+La bannière hérite de la police du thème via la variable CSS `--jdb-font-body`
+**si elle existe**, avec un repli sur une pile de polices système sans-serif. Elle
+s'intègre donc visuellement au thème quand cette variable est définie, et reste
+lisible partout sinon.
+
 ---
 
 ## 6. Sécurité
 
-Le plugin applique les bonnes pratiques WordPress, essentielles pour un site institutionnel :
+Le plugin applique les bonnes pratiques WordPress :
 
 - **Accès direct bloqué** : `if ( ! defined( 'ABSPATH' ) ) exit;`
 - **Capacité requise** : `manage_options` (administrateurs uniquement) pour les réglages.
@@ -159,12 +176,23 @@ Le plugin applique les bonnes pratiques WordPress, essentielles pour un site ins
 - La bannière est un repère de navigation : `role="region"` + `aria-label`.
 - Le bouton de fermeture a un `aria-label` explicite ; le symbole `×` est `aria-hidden`.
 - Focus clavier visible sur le bouton (`:focus-visible`).
+- Cible tactile du bouton de fermeture à 40px (recommandation WCAG 2.5.5).
+- Respect de `prefers-reduced-motion`.
 - **À surveiller côté rédacteur** : le contraste entre la couleur du texte et celle
   du fond doit respecter un ratio d'au moins **4.5:1** (texte normal).
 
 ---
 
-## 8. Données et désinstallation
+## 8. Responsive
+
+- Largeur fluide, mise en page en flexbox, le message passe à la ligne proprement.
+- Media queries mobile (< 768px) et petit mobile (< 480px) : police et paddings ajustés.
+- La hauteur réelle étant mesurée en JS (`--hkwp-banner-h`), le décalage de l'en-tête
+  reste correct même si le message occupe plusieurs lignes.
+
+---
+
+## 9. Données et désinstallation
 
 - Le plugin crée **une seule option** en base : `hkwp_banner_settings` (table `wp_options`).
 - La désactivation ne supprime pas cette option (les réglages sont conservés).
@@ -179,12 +207,14 @@ Le plugin applique les bonnes pratiques WordPress, essentielles pour un site ins
 
 ---
 
-## 9. Maintenance et évolutions possibles
+## 10. Maintenance et évolutions possibles
 
 - **Tester après mise à jour de WordPress** : vérifier que le thème appelle toujours
   `wp_body_open()` et que la bannière s'affiche.
-- **Cohabitation avec l'ancien plugin** : penser à désactiver l'affichage en bas de
-  page de l'ancien plugin promotionnel pour éviter un double bandeau.
+- **En-tête fixe** : si vous changez de thème, reportez les règles CSS de la section 4
+  (consommation de `--hkwp-banner-h`) dans le nouveau thème.
+- **Doublon de bannière** : si un autre outil affiche déjà un bandeau promo, désactivez-le
+  pour éviter deux bannières.
 - **Évolutions envisageables** :
   - Programmation d'affichage (date de début / fin).
   - Ciblage par page ou par modèle.
@@ -193,20 +223,20 @@ Le plugin applique les bonnes pratiques WordPress, essentielles pour un site ins
 
 ---
 
-## 10. Journal des versions
+## 11. Journal des versions
 
 ### 1.0.2
 - Bannière responsive : media queries mobile (< 768px) et petit mobile (< 480px),
   ajustement de la police et des paddings.
-- Typographie alignée sur le thème (`--jdb-font-body`).
+- Typographie héritée du thème via `--jdb-font-body` (avec repli système).
 - Bouton de fermeture agrandi à 40px (cible tactile, WCAG 2.5.5).
 - Prise en compte de `prefers-reduced-motion`.
-- Couleurs par défaut alignées sur la charte : fond noir, texte blanc.
+- Couleurs par défaut : fond noir, texte blanc.
 
 ### 1.0.1
-- Correction du chevauchement avec le menu fixe du thème : la bannière est
-  désormais fixée en haut et publie sa hauteur via `--hkwp-banner-h`, que le
-  thème utilise pour décaler le menu et le contenu.
+- Correction du chevauchement avec un en-tête fixe : la bannière est désormais fixée
+  en haut et publie sa hauteur via `--hkwp-banner-h`, que le thème peut utiliser pour
+  décaler son en-tête et son contenu.
 - Le script est chargé dès que la bannière est active (mesure de hauteur),
   même sans bouton de fermeture.
 
