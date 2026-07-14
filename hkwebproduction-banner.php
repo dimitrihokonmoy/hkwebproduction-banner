@@ -3,7 +3,7 @@
  * Plugin Name:       HKWebProduction Banner
  * Plugin URI:        https://hkwebproduction.com/
  * Description:       Affiche un message promotionnel en haut du site (juste après l'ouverture de la balise body). Le message, les couleurs et le bouton de fermeture se configurent depuis l'administration WordPress.
- * Version:           1.0.3
+ * Version:           1.0.4
  * Requires at least: 6.0
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 
 /** Version du plugin (sert aussi au versionnage du cache CSS/JS). */
-define( 'HKWP_BANNER_VERSION', '1.0.3' );
+define( 'HKWP_BANNER_VERSION', '1.0.4' );
 
 /** Clé unique de l'option stockée en base (table wp_options). */
 define( 'HKWP_BANNER_OPTION', 'hkwp_banner_settings' );
@@ -55,15 +55,17 @@ define( 'HKWP_BANNER_PATH', plugin_dir_path( __FILE__ ) );
  * Utilisé à l'activation et comme repli lorsqu'une valeur est absente.
  *
  * @since 1.0.0
- * @return array{enabled:int,message:string,bg_color:string,text_color:string,closable:int}
+ * @return array{enabled:int,message:string,bg_color:string,text_color:string,closable:int,start_date:string,end_date:string}
  */
 function hkwp_banner_default_settings() {
 	return array(
 		'enabled'    => 0,          // Bannière désactivée par défaut.
 		'message'    => '',         // Message vide par défaut.
-		'bg_color'   => '#000000',  // Noir (cohérent avec la charte JDB Secrets).
+		'bg_color'   => '#000000',  // Noir par défaut.
 		'text_color' => '#ffffff',  // Texte blanc par défaut.
 		'closable'   => 1,          // Bouton de fermeture actif par défaut.
+		'start_date' => '',         // Date/heure de début (vide = pas de début imposé).
+		'end_date'   => '',         // Date/heure de fin (vide = pas de fin imposée).
 	);
 }
 
@@ -135,6 +137,77 @@ add_action( 'init', 'hkwp_banner_load_textdomain' );
 
 /*
  * -------------------------------------------------------------------------
+ * Programmation d'affichage (date de début / fin)
+ * -------------------------------------------------------------------------
+ */
+
+/**
+ * Normalise une valeur de champ datetime-local au format 'Y-m-d\TH:i'.
+ *
+ * Accepte le format avec ou sans secondes. Retourne une chaîne vide si la
+ * valeur est absente ou invalide.
+ *
+ * @since 1.0.4
+ * @param mixed $value Valeur brute (ex. "2026-07-14T15:30").
+ * @return string Date normalisée "Y-m-d\TH:i" ou "".
+ */
+function hkwp_banner_normalize_datetime( $value ) {
+	$value = is_string( $value ) ? trim( $value ) : '';
+	if ( '' === $value ) {
+		return '';
+	}
+
+	$tz = wp_timezone();
+
+	// Tente le format sans secondes, puis avec secondes.
+	foreach ( array( 'Y-m-d\TH:i', 'Y-m-d\TH:i:s' ) as $format ) {
+		$dt = DateTime::createFromFormat( $format, $value, $tz );
+		if ( $dt instanceof DateTime ) {
+			return $dt->format( 'Y-m-d\TH:i' );
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Indique si la bannière doit être affichée à l'instant présent,
+ * selon les dates de début et de fin programmées.
+ *
+ * Les dates sont interprétées dans le fuseau horaire du site. Une date
+ * vide signifie "pas de borne" (début ou fin non imposé).
+ *
+ * @since 1.0.4
+ * @param array $settings Réglages du plugin.
+ * @return bool True si la bannière est dans sa période d'affichage.
+ */
+function hkwp_banner_is_within_schedule( $settings ) {
+	$tz  = wp_timezone();
+	$now = new DateTime( 'now', $tz );
+
+	// Date de début : si définie et pas encore atteinte, on n'affiche pas.
+	$start = hkwp_banner_normalize_datetime( isset( $settings['start_date'] ) ? $settings['start_date'] : '' );
+	if ( '' !== $start ) {
+		$start_dt = DateTime::createFromFormat( 'Y-m-d\TH:i', $start, $tz );
+		if ( $start_dt instanceof DateTime && $now < $start_dt ) {
+			return false;
+		}
+	}
+
+	// Date de fin : si définie et dépassée, on n'affiche plus.
+	$end = hkwp_banner_normalize_datetime( isset( $settings['end_date'] ) ? $settings['end_date'] : '' );
+	if ( '' !== $end ) {
+		$end_dt = DateTime::createFromFormat( 'Y-m-d\TH:i', $end, $tz );
+		if ( $end_dt instanceof DateTime && $now > $end_dt ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * -------------------------------------------------------------------------
  * Front-office : affichage de la bannière
  * -------------------------------------------------------------------------
  */
@@ -164,6 +237,11 @@ function hkwp_banner_render_banner() {
 	// Rien à afficher si le message est vide.
 	$message = trim( (string) $settings['message'] );
 	if ( '' === $message ) {
+		return;
+	}
+
+	// Programmation : hors de la période de début/fin, on n'affiche pas.
+	if ( ! hkwp_banner_is_within_schedule( $settings ) ) {
 		return;
 	}
 
@@ -228,8 +306,10 @@ function hkwp_banner_enqueue_assets() {
 
 	$settings = hkwp_banner_get_settings();
 
-	// Ne rien charger si la bannière est désactivée ou vide.
-	if ( empty( $settings['enabled'] ) || '' === trim( (string) $settings['message'] ) ) {
+	// Ne rien charger si la bannière est désactivée, vide, ou hors période.
+	if ( empty( $settings['enabled'] )
+		|| '' === trim( (string) $settings['message'] )
+		|| ! hkwp_banner_is_within_schedule( $settings ) ) {
 		return;
 	}
 
@@ -333,6 +413,10 @@ function hkwp_banner_sanitize_settings( $input ) {
 	$text                 = isset( $input['text_color'] ) ? sanitize_hex_color( $input['text_color'] ) : '';
 	$output['text_color'] = $text ? $text : $defaults['text_color'];
 
+	// Programmation : dates de début et de fin normalisées ("" si vide/invalide).
+	$output['start_date'] = hkwp_banner_normalize_datetime( isset( $input['start_date'] ) ? $input['start_date'] : '' );
+	$output['end_date']   = hkwp_banner_normalize_datetime( isset( $input['end_date'] ) ? $input['end_date'] : '' );
+
 	return $output;
 }
 
@@ -429,6 +513,38 @@ function hkwp_banner_settings_page() {
 								value="1"
 								<?php checked( 1, (int) $settings['closable'] ); ?> />
 							<span class="description"><?php esc_html_e( 'Permet au visiteur de fermer la bannière (mémorisé sur son navigateur).', 'hkwebproduction-banner' ); ?></span>
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row">
+							<label for="hkwp_banner_start_date"><?php esc_html_e( 'Date de début', 'hkwebproduction-banner' ); ?></label>
+						</th>
+						<td>
+							<input type="datetime-local"
+								id="hkwp_banner_start_date"
+								name="<?php echo esc_attr( HKWP_BANNER_OPTION ); ?>[start_date]"
+								value="<?php echo esc_attr( $settings['start_date'] ); ?>" />
+							<span class="description"><?php esc_html_e( 'Optionnel. Avant cette date, la bannière ne s\'affiche pas. Laissez vide pour un affichage immédiat.', 'hkwebproduction-banner' ); ?></span>
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row">
+							<label for="hkwp_banner_end_date"><?php esc_html_e( 'Date de fin', 'hkwebproduction-banner' ); ?></label>
+						</th>
+						<td>
+							<input type="datetime-local"
+								id="hkwp_banner_end_date"
+								name="<?php echo esc_attr( HKWP_BANNER_OPTION ); ?>[end_date]"
+								value="<?php echo esc_attr( $settings['end_date'] ); ?>" />
+							<span class="description"><?php esc_html_e( 'Optionnel. Après cette date, la bannière ne s\'affiche plus. Laissez vide pour un affichage sans fin.', 'hkwebproduction-banner' ); ?></span>
+							<p class="description">
+								<?php
+								/* translators: %s: fuseau horaire du site (ex. Europe/Paris). */
+								printf( esc_html__( 'Les dates utilisent le fuseau horaire du site : %s.', 'hkwebproduction-banner' ), '<code>' . esc_html( wp_timezone_string() ) . '</code>' );
+								?>
+							</p>
 						</td>
 					</tr>
 				</tbody>

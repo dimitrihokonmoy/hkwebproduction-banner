@@ -3,7 +3,7 @@
 Plugin WordPress qui affiche un message promotionnel **tout en haut du site** (bandeau plein largeur), configurable depuis l'administration : texte/HTML, couleurs, et bouton de fermeture.
 
 - **Auteur :** HKWebProduction
-- **Version :** 1.0.3
+- **Version :** 1.0.4
 - **Licence :** GPL-2.0-or-later
 - **Text Domain :** `hkwebproduction-banner`
 
@@ -55,9 +55,21 @@ Dans **Réglages → HKWP Banner** :
 | **Couleur de fond**   | Couleur d'arrière-plan du bandeau.                                          |
 | **Couleur du texte**  | Couleur du texte. Veiller au **contraste** (accessibilité RGAA/WCAG).       |
 | **Bouton de fermeture** | Autorise le visiteur à fermer la bannière (mémorisé dans son navigateur). |
+| **Date de début**     | Optionnel. Avant cette date/heure, la bannière ne s'affiche pas. Vide = affichage immédiat. |
+| **Date de fin**       | Optionnel. Après cette date/heure, la bannière ne s'affiche plus. Vide = sans fin. |
 
 > **Astuce :** si vous modifiez le message, la bannière **réapparaît** automatiquement
 > chez les visiteurs qui l'avaient fermée (la mémorisation est liée au contenu du message).
+
+### Programmation d'affichage
+
+Les champs **Date de début** et **Date de fin** permettent d'afficher la bannière
+uniquement pendant une période donnée (ex. une promo limitée dans le temps) :
+
+- Les deux champs sont **optionnels** et indépendants (on peut ne renseigner que l'un).
+- Les dates sont interprétées dans le **fuseau horaire du site** (Réglages → Général).
+- Hors période, la bannière n'est pas rendue **et** ses fichiers CSS/JS ne sont pas
+  chargés (aucun impact sur les performances).
 
 ---
 
@@ -126,6 +138,8 @@ identifiants sont préfixés :
 | --------------------------------- | ----------------------------------------------------------- |
 | `hkwp_banner_default_settings()`  | Retourne les réglages par défaut.                           |
 | `hkwp_banner_get_settings()`      | Lit les réglages en base, fusionnés avec les défauts.       |
+| `hkwp_banner_normalize_datetime()`| Normalise/valide une date datetime-local (fuseau du site).  |
+| `hkwp_banner_is_within_schedule()`| Indique si l'instant présent est dans la période programmée.|
 | `hkwp_banner_activate()`          | Crée l'option à l'activation (sans écraser l'existant).     |
 | `hkwp_banner_render_banner()`     | Affiche le HTML de la bannière (`wp_body_open`).            |
 | `hkwp_banner_enqueue_assets()`    | Charge CSS/JS **uniquement** si la bannière est active.     |
@@ -215,7 +229,6 @@ Le plugin applique les bonnes pratiques WordPress :
 - **Doublon de bannière** : si un autre outil affiche déjà un bandeau promo, désactivez-le
   pour éviter deux bannières.
 - **Évolutions envisageables** :
-  - Programmation d'affichage (date de début / fin).
   - Ciblage par page ou par modèle.
   - Plusieurs bannières / rotation de messages.
   - Fichier de traduction `/languages` (le domaine est déjà prêt).
@@ -223,6 +236,11 @@ Le plugin applique les bonnes pratiques WordPress :
 ---
 
 ## 11. Journal des versions
+
+### 1.0.4
+- Programmation d'affichage : champs **date de début** et **date de fin** (optionnels),
+  interprétés dans le fuseau horaire du site. Hors période, la bannière et ses assets
+  ne sont pas chargés.
 
 ### 1.0.3
 - Typographie : `font-family: inherit` (héritage automatique de la police du site,
