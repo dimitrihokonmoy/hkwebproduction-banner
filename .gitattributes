@@ -1,0 +1,6 @@
+# Normalisation des fins de ligne
+* text=auto eol=lf
+
+# Fichiers à exclure des archives d'export (git archive)
+/.gitignore     export-ignore
+/.gitattributes export-ignore

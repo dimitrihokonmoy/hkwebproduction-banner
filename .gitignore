@@ -1,0 +1,28 @@
+# Dépendances
+/node_modules/
+/vendor/
+
+# Artefacts de build / archives
+*.zip
+/dist/
+/build/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Éditeurs / IDE
+.idea/
+.vscode/
+*.sublime-*
+*.code-workspace
+
+# Logs et fichiers temporaires
+*.log
+*.tmp
+*.bak
+*~
+
+# Environnement
+.env
+.env.*
